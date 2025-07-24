@@ -1,0 +1,30 @@
+[Unit]
+Description=CANARY Container
+Wants=NetworkManager.service network-online.target
+After=NetworkManager.service network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User={{ canary_user }}
+
+Environment="CANARY_IMAGE={{ canary_image }}"
+
+# Required mount point for opencarnary application config
+Environment= "CANARY_CONFIG_MOUNT=/home/{{ canary_user }}/config/opencanary.conf:/etc/opencanaryd/opencanary.conf:Z"
+
+TimeoutStartSec=0
+
+# Note: Prevent the error 'The container name "CANARY" is already in use by container <container_id>. You have to remove (or rename) that container to be able to reuse that name.'
+ExecStartPre=/usr/bin/bash -c "/usr/bin/podman stop CANARY > /dev/null 2>&1 || true"
+ExecStartPre=/usr/bin/bash -c "/usr/bin/podman rm CANARY > /dev/null 2>&1 || true"
+ExecStart=/usr/bin/podman run \
+        --env-file /home/{{ canary_user }}/env_file \
+        -v $CANARY_CONFIG_MOUNT \
+        -p 8000:{{ CANARY_DEFAULT_LISTEN_PORT }}/tcp \
+        --name CANARY \
+        --replace=true \
+        --rm $CANARY_IMAGE
+
+Restart=on-failure

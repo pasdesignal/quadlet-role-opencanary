@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: opencanary
+spec:
+  containers:
+  - name: opencanary1
+    image: {{ CANARY_IMAGE }}
+    env:
+    - name: variable1
+      value: value1
+    volumeMounts:
+    - name: conf_vol
+      mountPath: /etc/opencanaryd/opencanary.conf:Z
+    livenessProbe:
+      httpGet:
+        path: /index
+        port: 443
+      initialDelaySeconds: 15
+      periodSeconds: 5
+  restartPolicy: Always
+  volumes:
+  - name: conf_vol
+    hostPath:
+      path: /home/{{ CANARY_USER }}/config/opencanary.conf
+  

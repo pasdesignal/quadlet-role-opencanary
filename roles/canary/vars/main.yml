@@ -1,0 +1,12 @@
+#CANARY user related
+CANARY_USER: canary
+CANARY_USER_UID: 1099
+CANARY_USER_GID: 1099
+
+#container image and version - change tag to pin version
+CANARY_IMAGE: thinkst/opencanary:latest
+
+#TCP listen port
+CANARY_DEFAULT_LISTEN_PORT: 8000
+#debug related
+info_only: false

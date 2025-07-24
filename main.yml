@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    info_only: false
+  pre_tasks:
+    #make sure podman is installed
+    - name: Install podman (RedHat, CentOS)
+      yum:
+        name:
+          - podman
+        state: latest
+      when: info_only == false
+  tasks:
+    - name: Include role canary
+      include_role:
+        name: canary

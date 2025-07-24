@@ -1,0 +1,94 @@
+---
+- name: Update sysctl to increase number of user namespaces
+  ansible.builtin.sysctl:
+    name: user.max_user_namespaces
+    value: 28633
+    state: present
+  become: true
+
+- name: Create user for running the systemd container service
+  ansible.builtin.user:
+    name: "{{ CANARY_USER }}"
+    state: present
+    shell: /bin/bash
+    uid: "{{ CANARY_USER_UID }}"
+
+- name: Enable user lingering for "non-interactive" DS_USER account
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ CANARY_USER }}"
+  become: true
+
+- name: Allow port 21+ unpriv on host VM and reload Sysctl
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: 21
+    state: present
+  become: true
+
+- name: Create canary dependency directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ CANARY_USER }}"
+    group: "{{ CANARY_USER }}"
+  loop:
+    - "/home/{{ CANARY_USER }}"
+    - "/home/{{ CANARY_USER }}/config"
+    - "/home/{{ CANARY_USER }}/.config/containers/systemd/"
+
+- name: Create canary env_file from template
+  ansible.builtin.template:
+    src: "roles/canary/templates/env_file.j2"
+    dest: "/home/{{ CANARY_USER }}/env_file"
+    owner: "{{ CANARY_USER }}"
+    group: "{{ CANARY_USER }}"
+    mode: u=rw,g=rw,o=r
+
+#the "defaults" config method should only be used where the "apps" method is not available
+- name: Create opencanary aaplication config file from template
+  ansible.builtin.template:
+    src: "roles/canary/templates/opencanary.j2"
+    dest: "/home/{{ CANARY_USER }}/config/opencanary.conf"
+    owner: "{{ CANARY_USER }}"
+    group: "{{ CANARY_USER }}"
+    mode: "0664"
+
+- name: Check if podman volume exists
+  ansible.builtin.shell: podman volume inspect canary_vol
+  register: volume_exists
+  ignore_errors: yes
+
+- name: Create a volume if it does not already exist
+  command: podman volume create canary_vol
+  when: volume_exists.rc != 0
+
+- name: Create quadlet yaml file from template 
+  ansible.builtin.template:
+    src: "roles/canary/templates/canary-yaml.j2"
+    dest: "/home/{{ CANARY_USER }}/.config/containers/systemd/canary.yml"
+    owner: "{{ CANARY_USER }}"
+    group: "{{ CANARY_USER }}"
+    mode: "0664"
+
+- name: Create quadlet kube file from template 
+  ansible.builtin.template:
+    src: "roles/canary/templates/canary-kube.j2"
+    dest: "/home/{{ CANARY_USER }}/.config/containers/systemd/canary.kube"
+    owner: "{{ CANARY_USER }}"
+    group: "{{ CANARY_USER }}"
+    mode: "0664"
+
+- name: Run daemon reload to make Quadlet create the service files
+  ansible.builtin.shell:
+    cmd: "systemctl --user -M {{ CANARY_USER }}@ daemon-reload"
+  become: true
+  register: daemonReload
+  ignore_errors: true
+
+- name: start canary.service
+  ansible.builtin.shell:
+    cmd: "systemctl --user -M {{ CANARY_USER }}@ start canary.service"
+  become: true
+  register: systemdStart
+  ignore_errors: true

@@ -1,0 +1,24 @@
+[Unit]
+Description=Opencanary service
+Wants=NetworkManager.service network-online.target
+After=NetworkManager.service network-online.target
+
+[Install]
+WantedBy=multi-user.target default.target
+
+[Service]
+Restart=always
+DefaultStartLimitIntervalSec=60s
+DefaultStartLimitBurst=3
+TimeoutStartSec=0
+
+[Kube]
+Yaml=canary.yml
+LogDriver=journald
+PublishPort=80:80
+PublishPort=21:21
+PublishPort=2222:2222
+PublishPort=443:443
+PublishPort=9418:9418
+PublishPort=3306:3306
+PublishPort=3389:3389
