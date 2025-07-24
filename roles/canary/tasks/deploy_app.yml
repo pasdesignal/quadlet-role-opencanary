@@ -12,6 +12,9 @@
     state: present
     shell: /bin/bash
     uid: "{{ CANARY_USER_UID }}"
+    groups: systemd-journal
+    append: true
+  become: true
 
 - name: Enable user lingering for "non-interactive" DS_USER account
   ansible.builtin.command:
@@ -83,12 +86,8 @@
   ansible.builtin.shell:
     cmd: "systemctl --user -M {{ CANARY_USER }}@ daemon-reload"
   become: true
-  register: daemonReload
-  ignore_errors: true
 
 - name: start canary.service
   ansible.builtin.shell:
-    cmd: "systemctl --user -M {{ CANARY_USER }}@ start canary.service"
+    cmd: "systemctl --user -M {{ CANARY_USER }}@ restart canary.service"
   become: true
-  register: systemdStart
-  ignore_errors: true
