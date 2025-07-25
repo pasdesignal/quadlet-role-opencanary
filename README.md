@@ -2,7 +2,13 @@
 
 This repo is used to demostrate some of the Podman+Quadlet functionality when using native k8s YAML to run define systemd services.
 The Ansible role included is designed to work on RHEL9/Alma9 machines.
- 
+
+## Instructions:
+
+1. Add appropriate machine details to inventory.ini
+2. run ansible command:
+`ansible-playbook -i inventory.ini main.yml`
+
 Note: The opencanary config for this demo is meaningless and is just there to get the container running.
 
 ## Handy commands:
