@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Configure OpenCanary with Podman
+  hosts: all
   become: true
   pre_tasks:
     # make sure podman is installed
@@ -10,5 +11,5 @@
         state: latest
   tasks:
     - name: Include role canary
-      include_role:
+      ansible.builtin.include_role:
         name: canary

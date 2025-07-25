@@ -15,10 +15,10 @@ spec:
       mountPath: /etc/opencanaryd/opencanary.conf:Z
     livenessProbe:
       httpGet:
-        path: /index
-        port: 443
+        path: /index.html
+        port: 80
       initialDelaySeconds: 15
-      periodSeconds: 5
+      periodSeconds: 30
   restartPolicy: Always
   volumes:
   - name: conf_vol
