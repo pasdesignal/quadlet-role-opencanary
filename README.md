@@ -1,5 +1,8 @@
 # Demo Ansible role to manage Podman + Quadlet container application.
 
+This repo is used to demostrate some of the Podman+Quadlet functionality when using native k8s YAML to run define systemd services.
+The Ansible role included is designed to work on RHEL9/Alma9 machines.
+ 
 Note: The opencanary config for this demo is meaningless and is just there to get the container running.
 
 ## Handy commands:
