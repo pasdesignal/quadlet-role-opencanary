@@ -1,11 +1,6 @@
-#CANARY user related
+# user related
 CANARY_USER: canary
 CANARY_USER_UID: 1099
 
-#container image and version
+# container image and version
 CANARY_IMAGE: docker.io/thinkst/opencanary:latest
-
-#TCP listen port
-#CANARY_DEFAULT_LISTEN_PORT: 8000
-#debug related
-#info_only: false

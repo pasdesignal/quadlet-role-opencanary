@@ -1,6 +1,6 @@
 ---
 - name: Update sysctl to increase number of user namespaces
-  ansible.builtin.sysctl:
+  ansible.posix.sysctl:
     name: user.max_user_namespaces
     value: 28633
     state: present
@@ -19,10 +19,12 @@
 - name: Enable user lingering for "non-interactive" DS_USER account
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ CANARY_USER }}"
+  register: linger_var
   become: true
+  changed_when: linger_var.rc == 0
 
 - name: Allow port 21+ unpriv on host VM and reload Sysctl
-  ansible.builtin.sysctl:
+  ansible.posix.sysctl:
     name: net.ipv4.ip_unprivileged_port_start
     value: 21
     state: present
@@ -48,25 +50,15 @@
     group: "{{ CANARY_USER }}"
     mode: u=rw,g=rw,o=r
 
-#the "defaults" config method should only be used where the "apps" method is not available
 - name: Create opencanary aaplication config file from template
   ansible.builtin.template:
-    src: "roles/canary/templates/opencanary.j2"
+    src: roles/canary/templates/opencanary.j2
     dest: "/home/{{ CANARY_USER }}/config/opencanary.conf"
     owner: "{{ CANARY_USER }}"
     group: "{{ CANARY_USER }}"
     mode: "0664"
 
-- name: Check if podman volume exists
-  ansible.builtin.shell: podman volume inspect canary_vol
-  register: volume_exists
-  ignore_errors: yes
-
-- name: Create a volume if it does not already exist
-  command: podman volume create canary_vol
-  when: volume_exists.rc != 0
-
-- name: Create quadlet yaml file from template 
+- name: Create quadlet yaml file from template
   ansible.builtin.template:
     src: "roles/canary/templates/canary-yaml.j2"
     dest: "/home/{{ CANARY_USER }}/.config/containers/systemd/canary.yml"
@@ -74,7 +66,7 @@
     group: "{{ CANARY_USER }}"
     mode: "0664"
 
-- name: Create quadlet kube file from template 
+- name: Create quadlet kube file from template
   ansible.builtin.template:
     src: "roles/canary/templates/canary-kube.j2"
     dest: "/home/{{ CANARY_USER }}/.config/containers/systemd/canary.kube"
@@ -83,11 +75,15 @@
     mode: "0664"
 
 - name: Run daemon reload to make Quadlet create the service files
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "systemctl --user -M {{ CANARY_USER }}@ daemon-reload"
   become: true
+  register: daemon_reload_var
+  changed_when: daemon_reload_var.rc == 0
 
-- name: start canary.service
-  ansible.builtin.shell:
+- name: Start canary.service
+  ansible.builtin.command:
     cmd: "systemctl --user -M {{ CANARY_USER }}@ restart canary.service"
   become: true
+  register: canary_service_var
+  changed_when: canary_service_var.rc == 0
