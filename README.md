@@ -5,7 +5,7 @@ The Ansible role included is designed to work on RHEL9/Alma9 machines.
 
 ## Instructions:
 
-1. Add appropriate machine details to inventory.ini
+1. add appropriate machine details to inventory.ini
 2. run ansible command:
 `ansible-playbook -i inventory.ini main.yml`
 
